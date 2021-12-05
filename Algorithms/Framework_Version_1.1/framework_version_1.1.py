@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[4]:
+
+
 from gurobipy import *
 from gurobipy import Model, GRB, quicksum
 import pandas as pd
@@ -5,8 +11,10 @@ from geopy.distance import geodesic
 import random
 from random import randint
 import numpy as np
+import matplotlib.pyplot as plt
 from functools import reduce
 import operator
+import itertools
 import os.path
 import time
 import copy
@@ -244,27 +252,22 @@ def main_Gurobi(name_file):
         
 def subtour_LKH(slice, tour):
     sub = []
-    remember = 0
     # добавляем номера городов, после которых суммарный вес груза превышал объем грузовика
     p = tour[:(slice[0] + 1)]
-    p.append(tour[0])
-    if(0 not in p):
-        h = randint(1, len(p)-1)
-        p.insert(h, 0)
-    else:
-        remember = 0
+    if(0 in p):
+        p.remove(0)
+    p.insert(0, 0)
+    p.append(0)
     sub.append(p)
     for i in range(0, len(slice) - 1):
         # нарежем маршруты городов до момента, пока суммарный вес груза не превысел объем грузовика
         k = tour[(slice[i] + 1):(slice[i + 1] + 1)] 
-        k.append(tour[(slice[i] + 1)])
-        if(0 not in k):
-            h = randint(1, len(k)-1)
-            k.insert(h, 0)
-        else:
-            remember = i
+        if(0 in k):
+            k.remove(0)
+        k.insert(0, 0)
+        k.append(0)
         sub.append(k)
-    return sub, remember
+    return sub
 
 def make_valid_tour(tour, tour_edges, X, Y, distance, num_cities):
     if len(Y) - len(X) != 0:
@@ -379,7 +382,7 @@ def main_LKH(name_file):
     nodes       = sheet.values
     depot       = nodes[len(nodes) - 1]
     cities_data = nodes[:(len(nodes) - 1)]
-    
+
     #set up for the loop calling LK
     n = len(cities_data) + 1 # +1, так как учитываем депо
 
@@ -393,7 +396,7 @@ def main_LKH(name_file):
     for i in range(n-1):
         x.append(cities_data[i][0])
         y.append(cities_data[i][1])
-        
+
     distance = {}
     for i,j in roads:
         node_1 = (x[i], y[i])
@@ -408,7 +411,7 @@ def main_LKH(name_file):
     q.append((0, depot[2]))
     for i in range(n-1):
         q.append((i+1, cities_data[i][2])) # вес груза, который необходимо перевести в город
-        
+
     p = 1
     max_vehicle *= p
     while(max_vehicle < max(q)[1]):
@@ -418,7 +421,7 @@ def main_LKH(name_file):
     print("Используется грузовиков: ", p)
 
     lst_subtour = subtourslice(tour, q, max_vehicle)
-    all_subtour, rem_idx = subtour_LKH(lst_subtour, tour)
+    all_subtour = subtour_LKH(lst_subtour, tour)
     print("all_subtour", all_subtour)
 
     dist_subtour = []
@@ -436,12 +439,12 @@ def main_LKH(name_file):
         success = True
         start=time.time()
         tour_edges = {}
-        
+
         for i in range(1, len(all_subtour[p])-1):
             tour_edges[all_subtour[p][i]] = {all_subtour[p][i+1], all_subtour[p][i-1]}
         tour_edges[all_subtour[p][0]] = {all_subtour[p][1], all_subtour[p][-2]}
 
-        if(len(all_subtour[p]) > 3):
+        if(len(all_subtour[p]) > 2):
             while success and time.time() - start < 100:
                 success, all_subtour[p], tour_edges = apply_LK(all_subtour[p], tour_edges, start, distance, len(all_subtour[p])-1, dist_subtour[p])
         print("Tour", all_subtour[p])
@@ -449,12 +452,11 @@ def main_LKH(name_file):
 
     s = 0
     for p in range(0, len(all_tour)):
-        if(rem_idx != p):
-            all_tour[p].remove(0)
         for i in range(len(all_tour[p])-1):
-            if(len(all_tour[p]) > 3):
+            if(len(all_tour[p]) > 2):
                 s += distance[(all_tour[p][i], all_tour[p][i+1])]
-        all_subtour[p].pop(-1)
+        all_tour[p].pop(0)
+        all_tour[p].pop(-1)
     print("New distance", s)
 
     print(all_tour)
@@ -476,4 +478,10 @@ if __name__ == "__main__":
                 print('Файл не найден. Попробуйте еще раз!')
         else:
             print('Некорректно введено название метода. Попробуйте еще раз!')
+
+
+# In[ ]:
+
+
+
 
