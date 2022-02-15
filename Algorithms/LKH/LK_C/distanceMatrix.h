@@ -62,7 +62,7 @@ void inithalfmatrix(halfmatrix *m, int h)
 {
 	m->height = h;
 	m->width = h;
-	m->data = (double**)malloc((h*(h+1)/2) * sizeof(double*));
+	m->data = (double**)malloc(h * sizeof(double*)); //(h*(h+1)/2)
 	if(m->data == NULL) 
     {
         printf("Error malloc\n");
@@ -81,6 +81,8 @@ void inithalfmatrix(halfmatrix *m, int h)
 
 double getByTown(const halfmatrix *canvas, int townx, int towny)
 {
+    //printf("i: %d, j: %d\n", my_min(townx, towny), canvas->width - my_max(townx, towny));
+    //printf("hlf: %d, townx: %d, towny: %d\n", canvas->width, townx, towny);
     return canvas->data[my_min(townx, towny)][canvas->width - my_max(townx, towny)];
 }
 
