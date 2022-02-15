@@ -84,7 +84,6 @@ int read_file(const char* name_file, town *towns, int counttowns)
     in = fopen(name_file, "r");
     if(in == NULL)
     {
-        //printf("11 Error %d \n", errno);
         return -1;
     }
     int symbol;
@@ -97,7 +96,7 @@ int read_file(const char* name_file, town *towns, int counttowns)
         fscanf(in, "%lf\t%lf\t%lf\n", &x, &y, &cap);
         towns[i] = maketown(i, x, y, cap);
     }
-    //fscanf(in, "%lf\t%lf\t\n", &depot[0], &depot[1]);
+
     fclose(in);
     return 0;
 }
@@ -139,7 +138,6 @@ double getDistance(const town town1, const town town2)
 		}
 	}
 	double result = strtod(num, &eptr);
-	//printf("%lf\n", result);
 	pclose(fp);	
 	return result;
 }
@@ -196,27 +194,14 @@ void printTownList(int counttown, town *towns)
 
 double subtourdistance(town *sub, int lenSub, halfmatrix* m)
 {
-	// 1 2 3 4 #4
-	// 01 12 23 34 40 #5
-	//printTownList(lenSub, sub);
 	if(lenSub == 0) {
 		return 0;
 	}
-	//printf("lenSub: %d\n", lenSub);
-	//printf("all sub: [");
-	/*
-	for(int i = 0; i < lenSub; i++) {
-		printf("%d ", sub[i].name);
-	}
-	printf("]\n");
-	printf("sub[lenSub-1].name: %d\n", sub[lenSub-1].name);*/
+
 	double r = getByTown(m, 0, sub[0].name) + getByTown(m, 0, sub[lenSub-1].name);
-	//printf("@%lf %lf\n", getByTown(m, 0, sub[0].name), getByTown(m, 0, sub[lenSub-1].name));
 
 	for(int i = 0; i < lenSub-1; i++)
 	{
-		//printf("@%lf\n", getByTown(m, sub[i].name, sub[i+1].name));
-		//printf("sub[i+1].name: %d\n", sub[i+1].name);
 		r += getByTown(m, sub[i].name, sub[i+1].name);
 	}
 	return r;
@@ -241,9 +226,6 @@ void reverseTown(town *sub, int i, int j)
 int moveElems(town *sub, int start1, int end1, int start2, int end2)
 {
 	int difference = (end1 - start1 - (end2 - start2));
-	// 0 1 2 3 4 5 6 7 8 9 10
-	//[0 1 2 3]4 5 6[7 8 9]10
-	//difference = 3 - 0 - (9 - 7) = 1
 
 	town tmp;
 
@@ -254,63 +236,42 @@ int moveElems(town *sub, int start1, int end1, int start2, int end2)
 	for(int i = 0; i < abs(difference); i++) {
 		if(difference > 0) {
 			mtmp[i] = sub[end1 + 1 - difference + i];
-			//printf("%d ", mtmp[i].name);
 		} else if(difference < 0) {
 			mtmp[i] = sub[start2 + i];
 		}
 	}
-	//putchar('\n');
+
 	if(difference > 0) {
-		//0[1 2 3 4]5 6 7[8 9]10
-		//0[1 2 3 4 5]6[7]8 9 10
-		//printTownList(11, sub);
-		for(int i = 0; i < end2 - end1; i++) { //start2 + start1 - (end1 - start1 - (end2 - start2)) = 2*start2 + 2 *start1 - end1 - end2
+		for(int i = 0; i < end2 - end1; i++) {
 			sub[end1 + 1 - difference + i] = sub[end1 + 1 + i];
 		}
-		//0[1 2 5 6]7 8 9[* *]10
-		//0[1 6 7 * *]*[*]8 9 10
-		//printTownList(11, sub);
+
 		for(int i = 0; i < end2 - start2 + 1; i++) {
 			tmp = sub[start1 + i];
 			sub[start1 + i] = sub[start2 + i - difference];
 			sub[start2 + i - difference] = tmp;
 		}
-		//printTownList(11, sub);
-		//0[8 9 5 6]7 1 2[* *]10
+
 		for(int i = 0; i < abs(difference); i++) {
 			sub[end2 + 1 - difference +i] = mtmp[i];
 		}
-		//printTownList(11, sub);
-		//0[8 9 5 6]7 1 2[3 4]10
-		//0{8 9}5 6 7{1 2 3 4}10
-		//printTownList(11, sub);
 
 	} else if(difference < 0) {
-		//[0 1 2]3 4[5 6 7 8 9]10
-		//printTownList(11, sub);
+
 		for(int i = 0; i < end1 - start1 + 1; i++) {
 			tmp = sub[start1 + i];
 			sub[start1 + i] = sub[start2 - difference + i];
 			sub[start2 - difference + i] = tmp;
 		}
-		//printTownList(11, sub);
-		//[7 8 9]3 4[5 6 0 1 2]10
 
 		for(int i = 0; i < start2-start1; i++) {
 			sub[start2 - difference - 1 - i] = sub[start2 - 1 - i];
 		}
-		//[* * 7]8 9[3 4 0 1 2]10
-		//printTownList(11, sub);
 		for(int i = 0; i < abs(difference); i++) {
 			sub[start1 + i] = mtmp[i];
 		}
-		//{5 6 7 8 9}3 4{0 1 2}10
-		//printTownList(11, sub);
 	}
 
-	//[7 8 9 3]4 5 6[0 1 2]10
-
-	//[7 8 9 4]5 6 0[1 2 3]10
 	free(mtmp);
 	return 0;
 }
@@ -390,21 +351,16 @@ double lkh3opt(town *sub, int lenSub, halfmatrix *m)
 	{
 		mode = rand() % 7;
 
-		//printf("l: %d, sub: ", lenSub);
-		/*for(int db = 0; db < lenSub; db++) {
-			printf("%d ", sub[db].name);
-		} putchar('\n');*/
-
 		a0 = rand() % lenSub;
 		b0 = rand() % lenSub;
 		
 		while(a0==b0) {
 			b0 = rand() % lenSub;
 		}
-		//printf("I pass while!\n");
+
 		a = my_min(a0, b0);
 		b = my_max(a0, b0);
-		//printf("%d %d\n", a, b);
+
 		switch(mode){
 			case(0): {reverseTown(subcopy, 1, a);break;}
 			case(1): {reverseTown(subcopy, a+1, b);break;}
